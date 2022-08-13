@@ -52,7 +52,13 @@ with closing(requests.get(f"{CLOUDFLARE_API_DOMAIN}?name={DDNS_DOMAIN}", headers
     resp_json = resp.json()
 
 logger.debug(f'Cloudflare List DNS Records response: {resp_json}')
-result = resp_json['result']
+
+if not resp_json['success']:
+    logger.error('cannot get DNS info from Cloudflare')
+    logger.error(f'errors: {resp_json["errors"]}')
+    exit(1)
+
+result = resp_json.get('result')
 if not result:
     logger.error('no domain found')
     exit(1)
@@ -82,7 +88,6 @@ logger.debug(f'Cloudflare Patch DNS Record response: {resp_json}')
 if not resp_json['success']:
     logger.error('cannot update domain IP')
     logger.error(f'errors: {resp_json["errors"]}')
-    logger.error(f'messages: {resp_json["messages"]}')
     exit(1)
 
 logger.info(f"domain IP has been {'forced' if args.force else ''} updated to {ip}")
